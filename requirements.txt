@@ -1,0 +1,16 @@
+tensorflow
+opencv-python
+numpy
+flask
+werkzeug
+pillow
+matplotlib
+imutils
+scikit-learn
+pandas
+tensorflow-gpu
+pytest
+jupyter
+requests
+tqdm
+cv2

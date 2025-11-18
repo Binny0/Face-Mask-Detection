@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Face Mask Detection System</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .main-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        .header p {
+            margin: 10px 0 0 0;
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .nav-tabs {
+            border: none;
+            background: #f8f9fa;
+            padding: 0;
+        }
+
+        .nav-tabs .nav-link {
+            border: none;
+            padding: 20px 30px;
+            font-weight: 600;
+            color: var(--primary-color);
+            transition: all 0.3s ease;
+            margin-right: 2px;
+        }
+
+        .nav-tabs .nav-link:hover {
+            background: rgba(52, 152, 219, 0.1);
+            color: var(--secondary-color);
+        }
+
+        .nav-tabs .nav-link.active {
+            background: var(--secondary-color);
+            color: white;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .tab-content {
+            padding: 40px;
+            min-height: 600px;
+        }
+
+        .upload-zone {
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            padding: 50px 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: #f8f9fa;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--secondary-color);
+            background: rgba(52, 152, 219, 0.05);
+        }
+
+        .upload-zone.dragover {
+            border-color: var(--success-color);
+            background: rgba(39, 174, 96, 0.1);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            color: #ddd;
+            margin-bottom: 20px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--secondary-color), #2980b9);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3);
+        }
+
+        .stats-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        #video-feed {
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            max-width: 100%;
+            height: auto;
+        }
+
+        .result-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            margin: 20px 0;
+        }
+
+        .detection-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin: 5px;
+        }
+
+        .badge-success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .badge-warning {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .badge-danger {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .webcam-controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .webcam-controls button {
+            margin: 0 10px;
+        }
+
+        .progress-container {
+            display: none;
+            margin: 20px 0;
+        }
+
+        .alert {
+            border-radius: 10px;
+            border: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 15px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .tab-content {
+                padding: 20px;
+            }
+            
+            .nav-tabs .nav-link {
+                padding: 15px 20px;
+                font-size: 0.9rem;
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-card">
+            <!-- Header -->
+            <div class="header">
+                <h1><i class="fas fa-mask"></i> AI Face Mask Detection</h1>
+                <p>Advanced real-time face mask detection using deep learning</p>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <ul class="nav nav-tabs" id="mainTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload" type="button" role="tab">
+                        <i class="fas fa-upload"></i> Upload Image
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="webcam-tab" data-bs-toggle="tab" data-bs-target="#webcam" type="button" role="tab">
+                        <i class="fas fa-video"></i> Live Camera
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="stats-tab" data-bs-toggle="tab" data-bs-target="#stats" type="button" role="tab">
+                        <i class="fas fa-chart-bar"></i> Statistics
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Tab Content -->
+            <div class="tab-content" id="mainTabContent">
+                <!-- Upload Tab -->
+                <div class="tab-pane fade show active" id="upload" role="tabpanel">
+                    <h3><i class="fas fa-cloud-upload-alt"></i> Upload and Analyze Image</h3>
+                    <p class="text-muted mb-4">Select an image to detect face masks automatically</p>
+                    
+                    <div class="upload-zone" id="uploadZone" onclick="document.getElementById('imageInput').click()">
+                        <div class="upload-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <h5>Click to upload or drag and drop</h5>
+                        <p class="text-muted">Supports JPG, PNG, GIF, BMP (max 16MB)</p>
+                        <input type="file" id="imageInput" accept="image/*" style="display: none;">
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <button class="btn btn-primary btn-lg" onclick="uploadImage()" id="uploadBtn" disabled>
+                            <i class="fas fa-search"></i> Analyze Image
+                        </button>
+                    </div>
+
+                    <div class="progress-container">
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <div class="loading-spinner">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Processing...</span>
+                        </div>
+                        <p class="mt-2">Analyzing image...</p>
+                    </div>
+
+                    <div id="uploadResult"></div>
+                </div>
+
+                <!-- Webcam Tab -->
+                <div class="tab-pane fade" id="webcam" role="tabpanel">
+                    <h3><i class="fas fa-video"></i> Real-time Detection</h3>
+                    <p class="text-muted mb-4">Live face mask detection from your camera</p>
+                    
+                    <div class="text-center">
+                        <img id="video-feed" src="{{ url_for('video_feed') }}" class="img-fluid pulse">
+                        
+                        <div class="webcam-controls">
+                            <button class="btn btn-success" onclick="startWebcam()">
+                                <i class="fas fa-play"></i> Start Camera
+                            </button>
+                            <button class="btn btn-danger" onclick="stopWebcam()">
+                                <i class="fas fa-stop"></i> Stop Camera
+                            </button>
+                            <button class="btn btn-info" onclick="captureScreenshot()">
+                                <i class="fas fa-camera"></i> Screenshot
+                            </button>
+                        </div>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Color Guide:</strong>
+                            <span class="detection-badge badge-success">With Mask</span>
+                            <span class="detection-badge badge-danger">Without Mask</span>
+                            <span class="detection-badge badge-warning">Improper Mask</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics Tab -->
+                <div class="tab-pane fade" id="stats" role="tabpanel">
+                    <h3><i class="fas fa-chart-bar"></i> Detection Statistics</h3>
+                    <p class="text-muted mb-4">Overview of all detections made during this session</p>
+                    
+                    <div class="stats-card">
+                        <div class="row" id="statsContent">
+                            <div class="col-md-3 stat-item">
+                                <span class="stat-number" id="totalDetections">0</span>
+                                <span class="stat-label">Total Detections</span>
+                            </div>
+                            <div class="col-md-3 stat-item">
+                                <span class="stat-number text-success" id="withMask">0</span>
+                                <span class="stat-label">With Mask</span>
+                            </div>
+                            <div class="col-md-3 stat-item">
+                                <span class="stat-number text-danger" id="withoutMask">0</span>
+                                <span class="stat-label">Without Mask</span>
+                            </div>
+                            <div class="col-md-3 stat-item">
+                                <span class="stat-number text-warning" id="improperMask">0</span>
+                                <span class="stat-label">Improper Mask</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <button class="btn btn-outline-primary" onclick="refreshStats()">
+                            <i class="fas fa-sync-alt"></i> Refresh Stats
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="resetStats()">
+                            <i class="fas fa-trash"></i> Reset Stats
+                        </button>
+                    </div>
+
+                    <div id="statsChart" class="mt-4"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="notificationToast" class="toast" role="alert">
+            <div class="toast-header">
+                <strong class="me-auto">Notification</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body"></div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    
+    <script>
+        let statsChart = null;
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            setupFileUpload();
+            refreshStats();
+            
+            // Auto-refresh stats every 10 seconds
+            setInterval(refreshStats, 10000);
+        });
+
+        function setupFileUpload() {
+            const uploadZone = document.getElementById('uploadZone');
+            const fileInput = document.getElementById('imageInput');
+            const uploadBtn = document.getElementById('uploadBtn');
+
+            // File input change handler
+            fileInput.addEventListener('change', function(e) {
+                if (e.target.files.length > 0) {
+                    const file = e.target.files[0];
+                    uploadBtn.disabled = false;
+                    
+                    // Show file info
+                    const fileName = file.name;
+                    const fileSize = (file.size / 1024 / 1024).toFixed(2);
+                    uploadZone.innerHTML = `
+                        <div class="upload-icon text-success">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <h5 class="text-success">File Selected</h5>
+                        <p><strong>${fileName}</strong></p>
+                        <p class="text-muted">Size: ${fileSize} MB</p>
+                    `;
+                }
+            });
+
+            // Drag and drop handlers
+            uploadZone.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadZone.classList.add('dragover');
+            });
+
+            uploadZone.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+            });
+
+            uploadZone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    fileInput.files = files;
+                    fileInput.dispatchEvent(new Event('change'));
+                }
+            });
+        }
+
+        function uploadImage() {
+            const fileInput = document.getElementById('imageInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showNotification('Please select an image', 'warning');
+                return;
+            }
+
+            const loadingSpinner = document.querySelector('.loading-spinner');
+            const progressContainer = document.querySelector('.progress-container');
+            const uploadBtn = document.getElementById('uploadBtn');
+            
+            // Show loading state
+            loadingSpinner.style.display = 'block';
+            progressContainer.style.display = 'block';
+            uploadBtn.disabled = true;
+            
+            // Simulate progress
+            let progress = 0;
+            const progressBar = document.querySelector('.progress-bar');
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 90) progress = 90;
+                progressBar.style.width = progress + '%';
+            }, 100);
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                clearInterval(progressInterval);
+                progressBar.style.width = '100%';
+                
+                setTimeout(() => {
+                    loadingSpinner.style.display = 'none';
+                    progressContainer.style.display = 'none';
+                    uploadBtn.disabled = false;
+                    
+                    if (data.success) {
+                        displayResults(data);
+                        showNotification(`Successfully detected ${data.detections} face(s)`, 'success');
+                        refreshStats();
+                    } else {
+                        showNotification('Error: ' + data.error, 'danger');
+                    }
+                }, 500);
+            })
+            .catch(error => {
+                clearInterval(progressInterval);
+                loadingSpinner.style.display = 'none';
+                progressContainer.style.display = 'none';
+                uploadBtn.disabled = false;
+                
+                console.error('Error:', error);
+                showNotification('Upload failed. Please try again.', 'danger');
+            });
+        }
+
+        function displayResults(data) {
+            const resultDiv = document.getElementById('uploadResult');
+            
+            let resultsHtml = `
+                <div class="result-card fade-in">
+                    <h4><i class="fas fa-search"></i> Detection Results</h4>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <img src="data:image/jpeg;base64,${data.image}" class="img-fluid rounded" alt="Detection Result">
+                        </div>
+                        <div class="col-md-4">
+                            <h5>Summary</h5>
+                            <p><strong>Faces Detected:</strong> ${data.detections}</p>
+                            <div class="mt-3">
+            `;
+            
+            if (data.results && data.results.length > 0) {
+                resultsHtml += '<h6>Classifications:</h6>';
+                data.results.forEach((result, index) => {
+                    resultsHtml += `
+                        <div class="detection-badge badge-${result.color}">
+                            Face ${index + 1}: ${result.label} (${(result.confidence * 100).toFixed(1)}%)
+                        </div>
+                    `;
+                });
+            }
+            
+            resultsHtml += `
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            resultDiv.innerHTML = resultsHtml;
+        }
+
+        function startWebcam() {
+            fetch('/start_webcam', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Webcam started', 'success');
+                } else {
+                    showNotification('Failed to start webcam: ' + data.error, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Failed to start webcam', 'danger');
+            });
+        }
+
+        function stopWebcam() {
+            fetch('/stop_webcam', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Webcam stopped', 'info');
+                } else {
+                    showNotification('Failed to stop webcam: ' + data.error, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Failed to stop webcam', 'danger');
+            });
+        }
+
+        function captureScreenshot() {
+            // This would need additional backend implementation
+            showNotification('Screenshot feature coming soon!', 'info');
+        }
+
+        function refreshStats() {
+            fetch('/stats')
+            .then(response => response.json())
+            .then(data => {
+                updateStatsDisplay(data);
+                updateStatsChart(data);
+            })
+            .catch(error => {
+                console.error('Error fetching stats:', error);
+            });
+        }
+
+        function updateStatsDisplay(stats) {
+            document.getElementById('totalDetections').textContent = stats.total_detections || 0;
+            document.getElementById('withMask').textContent = stats.with_mask || 0;
+            document.getElementById('withoutMask').textContent = stats.without_mask || 0;
+            document.getElementById('improperMask').textContent = stats.improper_mask || 0;
+        }
+
+        function updateStatsChart(stats) {
+            const ctx = document.getElementById('statsChart');
+            
+            if (!ctx) return;
+            
+            if (statsChart) {
+                statsChart.destroy();
+            }
+            
+            const canvas = document.createElement('canvas');
+            canvas.id = 'statsChartCanvas';
+            ctx.innerHTML = '';
+            ctx.appendChild(canvas);
+            
+            statsChart = new Chart(canvas.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['With Mask', 'Without Mask', 'Improper Mask'],
+                    datasets: [{
+                        data: [stats.with_mask || 0, stats.without_mask || 0, stats.improper_mask || 0],
+                        backgroundColor: ['#27ae60', '#e74c3c', '#f39c12'],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                font: {
+                                    size: 14
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function resetStats() {
+            if (confirm('Are you sure you want to reset all statistics?')) {
+                fetch('/reset_stats', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        refreshStats();
+                        showNotification('Statistics reset successfully', 'success');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('Failed to reset statistics', 'danger');
+                });
+            }
+        }
+
+        function showNotification(message, type = 'info') {
+            const toast = document.getElementById('notificationToast');
+            const toastBody = toast.querySelector('.toast-body');
+            
+            toastBody.textContent = message;
+            
+            // Update toast styling based on type
+            toast.className = `toast bg-${type === 'danger' ? 'danger' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : 'info'} text-white`;
+            
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+        }
+
+        // Tab change handler
+        document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
+            tab.addEventListener('shown.bs.tab', function(e) {
+                if (e.target.getAttribute('data-bs-target') === '#stats') {
+                    setTimeout(refreshStats, 100);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
