@@ -5,27 +5,29 @@ A real-time face mask detection system using deep learning that can classify fac
 ##  Project Structure
 
 
-face-mask-detection/
-├── README.md
-├── requirements.txt
-├── app.py
-├── detect.py
-├── train.py
-├── models/
-│   ├── mask_detector.h5                    # Trained model (generated after training)
-│   ├── classes.npy                         # Class labels (generated after training)
-│   ├── best_mask_detector_finetuned.h5     # generated automatically
-│   └── best_mask_detector.h5               # generated automatically 
-├── data/
-│   ├── with_mask/                          # Images of people with masks
-│   ├── without_mask/                       # Images of people without masks
-│   └── improper_mask/                      # Images of people with improper masks
-├── static/
-│   └── style.css
-├── templates/
-│   └── index.html
-└── uploads/                                # Temporary upload folder (auto-created)
-
+face-mask-detection/                                                                                                                                                                                                    
+│── README.md                                                                                                                                                                                                          
+│── requirements.txt                                                                                                                                                                                                   
+│── app.py                                                                                                                                                                                                             
+│── detect.py                                                                                                                                                                                                          
+│── train.py                                                                                                                                                                                                           
+│── models/                                                                                                                                                                                                            
+│   ├── mask_detector.h5_______________________________# Trained model (generated after training)                                                                                                    
+│   ├── classes.npy____________________________________# Class labels (generated after training)                                                                                                                       
+│   ├── best_mask_detector_finetuned.h5________________# generated automatically                                                                                                                                       
+│   └── best_mask_detector.h5_________________________# generated automatically                                                                                                                                       
+│── data/                                                                                                                                                                                                               
+│   ├── with_mask/ ________________________# Images of people with masks                                                                                                                                              
+│   ├── without_mask/ _____________________# Images of people without masks                                                                                                                                           
+│   └── improper_mask/ ____________________# Images of people with improper masks                                                                                                                                     
+│── static/                                                                                                                                                                                                             
+│   └── style.css                                                                                                                                                                                                      
+│── templates/                                                                                                                                                                                                          
+│   └── index.html                                                                                                                                                                                                     
+│── uploads/ ______________________________# Temporary upload folder (auto-created)
+ 
+## Interface👇🏻
+![alt text](image.png)
 
 ## Features
 
@@ -159,6 +161,3 @@ The model uses **MobileNetV2** as the backbone with:
 - MobileNetV2 architecture
 - OpenCV for face detection
 - Flask for web framework
-
-## interface👇🏻
-![alt text](image.png)
