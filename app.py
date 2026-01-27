@@ -1,15 +1,14 @@
-from flask import Flask, render_template, Response, request, jsonify, send_file
+from flask import Flask, render_template, Response, request, jsonify
 import cv2
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.models import load_model # type: ignore
+from tensorflow.keras.models import load_model
 import base64
-import io
 import os
 import time
 from PIL import Image
 from werkzeug.utils import secure_filename
-import threading
+import gdown
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
@@ -21,15 +20,46 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 # Allowed extensions
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp'}
 
+
+# DOWNLOAD MODEL FROM GOOGLE DRIVE
+
+MODEL_FILE = 'models/mask_detector.h5'
+CLASSES_FILE = 'models/classes.npy'
+GDRIVE_MODEL_ID = '1Pp09_J_5aWj-g8KRtp1lG0-eaYkc-Vzp'  # .h5 file
+
+# Create models directory
+os.makedirs('models', exist_ok=True)
+
+# Download model from Google Drive if not exists
+if not os.path.exists(MODEL_FILE):
+    print("📥 Downloading model from Google Drive...")
+    print("This may take a few minutes depending on file size...")
+    url = f'https://drive.google.com/uc?id={GDRIVE_MODEL_ID}'
+    try:
+        gdown.download(url, MODEL_FILE, quiet=False)
+        print("✅ Model downloaded successfully!")
+    except Exception as e:
+        print(f"⚠️ Error downloading model: {e}")
+        print("Will attempt to use fallback model...")
+else:
+    print("✅ Model file already exists, skipping download.")
+
+# Create classes.npy if it doesn't exist
+if not os.path.exists(CLASSES_FILE):
+    print("Creating classes.npy file...")
+    classes = np.array(['with_mask', 'without_mask', 'improper_mask'])
+    np.save(CLASSES_FILE, classes)
+    print("✅ Classes file created!")
+
 class WebMaskDetector:
     def __init__(self):
         """Initialize the web mask detector with error handling"""
         try:
-            self.model = load_model('models/mask_detector.h5')
-            self.classes = np.load('models/classes.npy')
-            print(f"Model loaded successfully. Classes: {self.classes}")
+            self.model = load_model(MODEL_FILE)
+            self.classes = np.load(CLASSES_FILE)
+            print(f"✅ Model loaded successfully. Classes: {self.classes}")
         except Exception as e:
-            print(f"Error loading model: {e}")
+            print(f"⚠️ Error loading model: {e}")
             # Create dummy model for demonstration
             self.model = None
             self.classes = np.array(['with_mask', 'without_mask', 'improper_mask'])
@@ -57,16 +87,19 @@ class WebMaskDetector:
     def load_face_detector(self):
         """Load face detection model with fallback"""
         try:
-            # Try DNN face detector first
-            face_net = cv2.dnn.readNetFromTensorflow(
-                'models/opencv_face_detector_uint8.pb',
-                'models/opencv_face_detector.pbtxt'
-            )
-            print("Using DNN face detector")
-            return face_net
-        except:
-            print("DNN face detector not found, using Haar cascade fallback")
-            return None
+            # Try DNN face detector first (if files exist)
+            if os.path.exists('models/opencv_face_detector_uint8.pb'):
+                face_net = cv2.dnn.readNetFromTensorflow(
+                    'models/opencv_face_detector_uint8.pb',
+                    'models/opencv_face_detector.pbtxt'
+                )
+                print("✅ Using DNN face detector")
+                return face_net
+        except Exception as e:
+            print(f"⚠️ DNN face detector error: {e}")
+        
+        print("✅ Using Haar cascade fallback")
+        return None
     
     def detect_faces(self, frame, confidence_threshold=0.5):
         """Enhanced face detection with multiple methods"""
@@ -170,7 +203,7 @@ class WebMaskDetector:
             
             return results
         except Exception as e:
-            print(f"Prediction error: {e}")
+            print(f"⚠️ Prediction error: {e}")
             return []
     
     def draw_results(self, frame, locations, predictions):
@@ -354,7 +387,7 @@ def generate_frames():
                        b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
             
         except Exception as e:
-            print(f"Frame generation error: {e}")
+            print(f"⚠️ Frame generation error: {e}")
             break
     
     detector.stop_webcam()
@@ -408,11 +441,16 @@ def server_error(e):
     return jsonify({'error': 'Internal server error'}), 500
 
 if __name__ == '__main__':
-    print("Starting Face Mask Detection Web Application...")
+    print("=" * 60)
+    print("🚀 Starting Face Mask Detection Web Application...")
+    print("=" * 60)
     print("Available endpoints:")
     print("  / - Main interface")
     print("  /upload - Image upload and processing")
     print("  /video_feed - Live webcam stream")
     print("  /stats - Detection statistics")
+    print("=" * 60)
     
-    app.run(debug=True, host='0.0.0.0', port=8080 , threaded=True)
+    # Get port from environment variable (for Render deployment)
+    port = int(os.environ.get('PORT', 8080))
+    app.run(debug=False, host='0.0.0.0', port=port, threaded=True)
