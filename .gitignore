@@ -1,4 +1,4 @@
-# Model files (will be downloaded from Google Drive)
+# Model files
 *.h5
 *.npy
 models/
